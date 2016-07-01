@@ -21,7 +21,11 @@
                     <i class="fa fa-users"></i> <span>{{ trans('user.user_management') }}</span>
                 </a>
             </li>
-
+            <li class="{!! (in_array($currentRouteName, array('tags.index', 'tags.create', 'tags.edit', 'tags.show')))?  'active' : ''!!} ">
+                <a href="{{ url('tags') }}">
+                    <i class="fa fa-tags"></i> <span>{{ trans('tag.tag_management') }}</span>
+                </a>
+            </li>
 
 
         </ul>
