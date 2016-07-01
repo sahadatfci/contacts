@@ -6,8 +6,12 @@ use App\Http\Requests;
 use App\Http\Controllers\Controller;
 
 use App\User;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Hash;
 use Session;
 
 class UsersController extends Controller
@@ -41,14 +45,34 @@ class UsersController extends Controller
      *
      * @return Response
      */
-    public function store(Request $request)
+    public function store(Requests\AddUsersRequest $request)
     {
-        $this->validate($request, ['name' => 'required', ]);
-        Category::create($request->all());
+        $picuploadDir = public_path().'/user_photo';
+        $fileName = '';
+        if($request->hasFile('image')){
+            if($request->file('image')->isValid()){
+                $fileName = uniqid().'_'.Auth::user()->id.'.'.$request->file('image')->getClientOriginalExtension();
+                $request->file('image')->move($picuploadDir, $fileName);
+            }
+        }
+        $user = new User();
+        $user->name = $request->input('name');
+        $user->username = $request->input('username');
+        $user->email = $request->input('email');
+        $user->password = Hash::make($request->input('password'));
+        $user->status = $request->input('status');
+        $user->role_id = 2;
+        if(!empty($fileName)){
+            $user->image = $fileName;
+        }
 
-        Session::flash('flash_message', 'Category added!');
+        if($user->save()){
+            Session::flash('success_msg', 'User Create Successful');
+        }else{
+            Session::flash('error_msg', 'User Create Failed. Please Try Again Later');
+        }
 
-        return redirect('categories');
+        return redirect('users');
     }
 
     /**
@@ -74,9 +98,9 @@ class UsersController extends Controller
      */
     public function edit($id)
     {
-        $category = Category::findOrFail($id);
-
-        return view('categories.edit', compact('category'));
+        $user = User::findOrFail($id);
+        $statuses = ['1' => 'Active', '0' => 'Inactive'];
+        return view('users.edit', compact('user', 'statuses'));
     }
 
     /**
@@ -86,15 +110,41 @@ class UsersController extends Controller
      *
      * @return Response
      */
-    public function update($id, Request $request)
+    public function update($id, Requests\UserUPdateRequest $request)
     {
-        
-        $category = Category::findOrFail($id);
-        $category->update($request->all());
+        $user = User::findOrFail($id);
+        $prv_file_name = $user->image;
 
-        Session::flash('flash_message', 'Category updated!');
+        $picuploadDir = public_path().'/user_photo';
+        $fileName = '';
+        if($request->hasFile('image')){
+            if($request->file('image')->isValid()){
+                $fileName = uniqid().'_'.Auth::user()->id.'.'.$request->file('image')->getClientOriginalExtension();
+                $request->file('image')->move($picuploadDir, $fileName);
+                //now delete the previous image
+                if(!empty($prv_file_name)){
+                    File::delete($picuploadDir.'/'.$prv_file_name);
+                }
+            }
+        }
+        $user->name = $request->input('name');
+        $user->email = $request->input('email');
+        if(!empty($request->input('password'))){
+            $user->password = Hash::make($request->input('password'));
+        }
+        $user->status = $request->input('status');
+        $user->username = $request->input('username');
+        if(!empty($fileName)){
+            $user->image = $fileName;
+        }
 
-        return redirect('categories');
+        if($user->save()){
+            Session::flash('success_msg', 'User Update Successful');
+        }else{
+            Session::flash('error_msg', 'User Update Failed. Please Try Again Later');
+        }
+
+        return redirect('users');
     }
 
     /**
@@ -106,11 +156,27 @@ class UsersController extends Controller
      */
     public function destroy($id)
     {
-        Category::destroy($id);
+        try{
+            $user = User::findOrFail($id);
+        }catch(ModelNotFoundException $e){
+            Session::flash('error_msg', 'Invalid Request!');
+            return redirect('users');
+        }
 
-        Session::flash('flash_message', 'Category deleted!');
+        if($user->role_id == '1'){
+            Session::flash('error_msg', 'Can not delete admin user!');
+            return redirect('users');
+        }
+        $fileName = $user->image;
+        $res = $user->delete();
+        if($res){
+            File::delete(public_path().'/user_photo/'.$fileName);
+            Session::flash('success_msg', 'User Deleted!');
+        }else{
+            Session::flash('error_msg', 'User Couldn\'t Deleted!');
+        }
 
-        return redirect('categories');
+        return redirect('users');
     }
 
 }
