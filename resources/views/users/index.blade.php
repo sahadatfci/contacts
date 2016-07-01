@@ -34,6 +34,7 @@
                             <th>Email</th>
                             <th>Photo</th>
                             <th>User Role</th>
+                            <th>Status</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -54,17 +55,24 @@
                                 @endif
                             </td>
                             <td>{{ trans('user.role_'.$item->role_id) }}</td>
+                            <td class="text-center">
+                                @if($item->status == '1')
+                                    <span class="label label-success">Active</span>
+                                @else
+                                    <span class="label label-danger">Inactive</span>
+                                @endif
+                            </td>
                             <td>
                             <a href="{{ url('users/' . $item->id . '/edit') }}">
                                 <button type="submit" class="btn btn-primary btn-xs">Update</button>
                             </a>
-                                @if(Auth::user()->id != $item->id)
+                                @if(Auth::user()->id != $item->id && $item->role_id != '1')
                                     {!! Form::open([
                                         'method'=>'DELETE',
                                         'url' => ['users', $item->id],
                                         'style' => 'display:inline'
                                     ]) !!}
-                                    {!! Form::submit('Delete', ['class' => 'btn btn-danger btn-xs']) !!}
+                                    {!! Form::submit('Delete', ['class' => 'btn btn-danger btn-xs', 'onclick' => 'return confirm(\'Are you sure you want to delete?\')']) !!}
                                     {!! Form::close() !!}
                                 @endif
                             </td>

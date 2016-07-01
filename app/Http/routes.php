@@ -31,4 +31,5 @@ Route::group(['middleware' => 'web'], function () {
 
     Route::get('/', 'HomeController@index');
     Route::resource('users', 'UsersController', ['except' => ['show']]);
+    Route::resource('tags', 'TagsController', ['except' => ['show']]);
 });

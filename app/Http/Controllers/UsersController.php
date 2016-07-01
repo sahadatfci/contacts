@@ -75,19 +75,6 @@ class UsersController extends Controller
         return redirect('users');
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     *
-     * @return Response
-     */
-    public function show($id)
-    {
-        $category = Category::findOrFail($id);
-
-        return view('categories.show', compact('category'));
-    }
 
     /**
      * Show the form for editing the specified resource.
@@ -98,7 +85,13 @@ class UsersController extends Controller
      */
     public function edit($id)
     {
-        $user = User::findOrFail($id);
+        try{
+            $user = User::findOrFail($id);
+        }catch (ModelNotFoundException $e){
+            Session::flash('error_msg', 'User Not Found');
+            return redirect('users');
+        }
+
         $statuses = ['1' => 'Active', '0' => 'Inactive'];
         return view('users.edit', compact('user', 'statuses'));
     }
@@ -112,7 +105,12 @@ class UsersController extends Controller
      */
     public function update($id, Requests\UserUPdateRequest $request)
     {
-        $user = User::findOrFail($id);
+        try{
+            $user = User::findOrFail($id);
+        }catch (ModelNotFoundException $e){
+            Session::flash('error_msg', 'User Not Found');
+            return redirect('users');
+        }
         $prv_file_name = $user->image;
 
         $picuploadDir = public_path().'/user_photo';

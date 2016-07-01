@@ -60,6 +60,9 @@
 <script src="{{asset('public/assets/js/app.min.js')}}"></script>
 <!-- AdminLTE for demo purposes -->
 <script src="{{asset('public/assets/js/demo.js')}}"></script>
+<!-- custom script -->
+<script src="{{asset('public/assets/js/custom.js')}}"></script>
+
 @yield('pagejs')
 </body>
 </html>
